@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.concurrent.Flow.Publisher;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Slf4j
@@ -85,6 +86,34 @@ abstract class PublisherSubscriberUtils {
 
             @Override
             public void onComplete() {
+                subscriber.onComplete();
+            }
+        });
+    }
+
+    public static <T, R> Publisher<R> reducePublisher(Publisher<T> publisher, R seed, BiFunction<R, T, R> biFunction) {
+        return subscriber -> publisher.subscribe(new Subscriber<T>() {
+            private R result;
+
+            @Override
+            public void onSubscribe(Subscription subscription) {
+                result = seed;
+                subscriber.onSubscribe(subscription);
+            }
+
+            @Override
+            public void onNext(T item) {
+                result = biFunction.apply(result, item);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                subscriber.onError(throwable);
+            }
+
+            @Override
+            public void onComplete() {
+                subscriber.onNext(result);
                 subscriber.onComplete();
             }
         });
