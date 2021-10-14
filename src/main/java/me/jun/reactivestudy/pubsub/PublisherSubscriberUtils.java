@@ -3,6 +3,8 @@ package me.jun.reactivestudy.pubsub;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Flow.Publisher;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
@@ -18,6 +20,7 @@ abstract class PublisherSubscriberUtils {
             subscriber.onSubscribe(new Subscription() {
                 @Override
                 public void request(long n) {
+                    log.debug("request() {}", n);
                     try {
 //                        if (true) throw new RuntimeException("msg");
                         for (int i = 0; i < n; i++) {
@@ -36,7 +39,7 @@ abstract class PublisherSubscriberUtils {
 
                 @Override
                 public void cancel() {
-
+                    log.debug("cancel()");
                 }
             });
         };
@@ -117,5 +120,13 @@ abstract class PublisherSubscriberUtils {
                 subscriber.onComplete();
             }
         });
+    }
+
+    public static <T> Publisher<T> subscribeOn(Publisher<T> publisher) {
+        return subscriber -> {
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.execute(() -> publisher.subscribe(subscriber));
+            executorService.shutdown();
+        };
     }
 }
