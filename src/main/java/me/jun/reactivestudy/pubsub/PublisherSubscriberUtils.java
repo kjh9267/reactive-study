@@ -129,4 +129,34 @@ abstract class PublisherSubscriberUtils {
             executorService.shutdown();
         };
     }
+
+    public static <T> Publisher<T> publishOn(Publisher<T> publisher) {
+        return subscriber -> {
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+            publisher.subscribe(new Subscriber<T>() {
+                @Override
+                public void onSubscribe(Subscription subscription) {
+                    subscriber.onSubscribe(subscription);
+                }
+
+                @Override
+                public void onNext(T item) {
+                    executorService.execute(() -> subscriber.onNext(item));
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    executorService.execute(() -> subscriber.onError(throwable));
+                    executorService.shutdown();
+                }
+
+                @Override
+                public void onComplete() {
+                    executorService.execute(() -> subscriber.onComplete());
+                    executorService.shutdown();
+                }
+            });
+        };
+    }
 }
