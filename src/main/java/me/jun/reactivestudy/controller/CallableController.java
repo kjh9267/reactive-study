@@ -8,18 +8,18 @@ import java.util.concurrent.Callable;
 
 @RestController
 @Slf4j
-public class AsyncController {
+public class CallableController {
 
     private int ONE_SECOND = 1_000;
 
     // AsyncContext
 
-    @GetMapping("/async")
+    @GetMapping("/callable")
     public Callable<String> async() {
         return () -> {
-            log.info("async");
+            log.info("callable");
             Thread.sleep(ONE_SECOND);
-            return "async end";
+            return "callable end";
         };
     }
 }
